@@ -36,12 +36,12 @@ class Cache extends Model {
 
 	// set the contents of an iteam
 	public function setItem($key, $data){
-		$value = json_encode_escaped($data);
 		// reset id
 		$this->set('id', 0);
 		// find an existing key if available
 		$this->retrieve_one("key=?", $key);
 		$this->set('key', $key);
+		$value = json_encode_escaped($data);
 		$this->set('value', $value);
 		return ( !( $this->get('id') ) ) ? $this->create() : $this->update();
 		//
@@ -49,13 +49,17 @@ class Cache extends Model {
 
 	// get the contents of an item
 	public function getItem($key){
+		// reset id
+		$this->set('id', 0);
 		$this->retrieve_one("key=?", $key);
-		return json_decode($this->get('value'), true);
+		return ( !( $this->get('id') ) ) ? null : json_decode($this->get('value'), true);
 	}
 
 	public function removeItem($key){
+		// reset id
+		$this->set('id', 0);
 		$this->retrieve_one("key=?", $key);
-		$this->delete(); // shouldn't this be read()?
+		if( !( $this->get('id') ) ) $this->delete(); // shouldn't this be read()?
 		return;
 	}
 
