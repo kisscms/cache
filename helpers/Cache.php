@@ -19,10 +19,10 @@ class Cache extends Model {
 		// merge more options...
 
 		// create db file
-		$this->pkname = 'key';
+		$this->pkname = 'id';
 		$this->tablename = 'cache'; //sqlite_master
 		// schema
-		$this->rs['id'] = NULL;
+		$this->rs['id'] = 0;
 		$this->rs['key'] = '';
 		$this->rs['value'] = '';
 		$this->rs['updated'] = 0;
@@ -37,20 +37,24 @@ class Cache extends Model {
 	// set the contents of an iteam
 	public function setItem($key, $data){
 		$value = json_encode_escaped($data);
+		// reset id
+		$this->set('id', 0);
+		// find an existing key if available
+		$this->retrieve_one("key=?", $key);
 		$this->set('key', $key);
 		$this->set('value', $value);
-		$this->create();
+		return ( !( $this->get('id') ) ) ? $this->create() : $this->update();
 		//
 	}
 
 	// get the contents of an item
 	public function getItem($key){
-		$this->retrieve($key);
+		$this->retrieve_one("key=?", $key);
 		return json_decode($this->get('value'), true);
 	}
 
 	public function removeItem($key){
-		$this->set('key', $key);
+		$this->retrieve_one("key=?", $key);
 		$this->delete(); // shouldn't this be read()?
 		return;
 	}
@@ -64,8 +68,9 @@ class Cache extends Model {
 	public function valid($key, $timestamp=false ){
 		// compare against a date (fallback to now)
 		if( !$timestamp ) $timestamp = (string) $_SERVER['REQUEST_TIME'];
-		$this->retrieve($key);
-		return $this->get("updated") != 0 && ( (int) $this->get("updated") < $timestamp - $this->timeout );
+		if( strlen($timestamp) == 10 ) $timestamp .= "000";
+		$this->retrieve_one("key=?", $key);
+		return $this->get("updated") != 0 && ( (int) $timestamp < (int) $this->get("updated") + $this->timeout );
 	}
 
 
@@ -75,7 +80,7 @@ class Cache extends Model {
 		// #5 include microseconds when calculating REQUEST_TIME in PHP < 5.4
 		if( strlen($timestamp) == 10 ) $timestamp .= "000";
 		$this->rs['updated'] = $timestamp;
-
+		// continue as usual...
 		return parent::create();
 	}
 
@@ -84,7 +89,7 @@ class Cache extends Model {
 		// #5 include microseconds when calculating REQUEST_TIME in PHP < 5.4
 		if( strlen($timestamp) == 10 ) $timestamp .= "000";
 		$this->rs['updated'] = $timestamp;
-
+		// continue as usual...
 		return parent::update();
 	}
 }
