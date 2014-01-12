@@ -70,10 +70,13 @@ class Cache extends Model {
 
 	// get the last updated time
 	public function valid($key, $timestamp=false ){
+		// first make sure the item exists
+		$this->set('id', 0);
+		$this->retrieve_one("key=?", $key);
+		if( !( $this->get('id') ) ) return false;
 		// compare against a date (fallback to now)
 		if( !$timestamp ) $timestamp = (string) $_SERVER['REQUEST_TIME'];
 		if( strlen($timestamp) == 10 ) $timestamp .= "000";
-		$this->retrieve_one("key=?", $key);
 		return $this->get("updated") != 0 && ( (int) $timestamp < (int) $this->get("updated") + $this->timeout );
 	}
 
