@@ -1,5 +1,6 @@
 {
 	"name": "kisscms/cache",
+	"version": "0.1.0",
 	"type": "library",
 	"description": "Persistent cache plugin for KISSCMS",
 	"keywords": ["cache","kisscms"],
